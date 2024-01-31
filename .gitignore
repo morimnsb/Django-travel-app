@@ -1,0 +1,44 @@
+# Ignore database files
+*.sqlite3
+*.db
+
+# Ignore media files
+media/
+
+# Ignore static files
+staticfiles/
+
+# Ignore virtual environment
+venv/
+
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore local settings
+local_settings.py
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+
+# Ignore logs and other generated files
+*.log
+*.pot
+*.orig
+*.rej
+*.swp
+*.swo
+
+# Ignore secret key file
+secret_key.txt
+
+# Ignore frontend build files
+frontend/my-react-app/node_modules/
+frontend/my-react-app/build/
+frontend/my-react-app/dist/
+
+# Ignore environment file
+backend/.env
