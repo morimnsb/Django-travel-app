@@ -75,7 +75,7 @@ class Reply(models.Model):
 
 class Image(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_images')
-    image = models.URLField(max_length=500) 
+    image = models.TextField()  
 
 class PostImage(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_images_through')

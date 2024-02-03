@@ -42,3 +42,4 @@ frontend/my-react-app/dist/
 
 # Ignore environment file
 backend/.env
+frontend-travelApp\.env

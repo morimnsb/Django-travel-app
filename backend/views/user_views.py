@@ -16,7 +16,7 @@ from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.core.validators import validate_email
-
+from django.core.serializers import serialize
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django.contrib.auth.password_validation import validate_password
@@ -158,12 +158,13 @@ def verify_user(request):
 # Function to search for a user by username
 def search_user(request, username):
     try:
-        user = get_object_or_404(User, userName=username)
+        user = get_object_or_404(User, username=username)
         user_info = {
             "id": str(user.id),
-            "userName": user.userName,
+            "userName": user.username,
             "email": user.email,
-            "avatar": str(user.avatar),
+            "posts": serialize('json', user.posts.all()), 
+            # "avatar": str(user.avatar),
         }
         return JsonResponse(success_response({"userInfo": user_info}))
     except Exception as e:
