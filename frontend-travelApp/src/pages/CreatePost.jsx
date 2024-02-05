@@ -4,35 +4,33 @@ import {
   ref,
   uploadBytesResumable,
   getDownloadURL,
-} from "firebase/storage";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { isImageValid } from "../utils/imageFormatUtils.js";
-import BackButton from "../components/BackButton";
-import { toast } from "react-toastify";
+} from 'firebase/storage';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { isImageValid } from '../utils/imageFormatUtils.js';
+import BackButton from '../components/BackButton';
+import { toast } from 'react-toastify';
 // import { app } from "../config/firebase.config.js";
 // Importing named exports
 import firebaseConfig, { storage } from '../config/firebase.config';
 
 const apiKey = firebaseConfig?.VITE_apiKey || 'default-api-key';
 export default function CreatePost() {
-  const [title, setTitle] = useState("");
-  const [place, setPlace] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState('');
+  const [place, setPlace] = useState('');
+  const [description, setDescription] = useState('');
   const [files, setFiles] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-
-  const userinfo = JSON.parse(localStorage.getItem("Userinfo"))
+  const userinfo = JSON.parse(localStorage.getItem('Userinfo'));
   // console.log(userinfo.username)
   // Add Post
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    
     try {
       // const storage = getStorage(app);
       const imagePaths = [];
@@ -40,7 +38,7 @@ export default function CreatePost() {
       // Check if the image format is valid
       if (!isImageValid(files)) {
         setError(
-          "Some of the selected files are not in a supported format. Please only upload files in JPEG or PNG format."
+          'Some of the selected files are not in a supported format. Please only upload files in JPEG or PNG format.',
         );
 
         // clear the error message after 3 seconds
@@ -56,60 +54,55 @@ export default function CreatePost() {
       // Upload files to Firebase Storage
       for (let i = 0; i < files.length; i++) {
         const fileName = new Date().getTime() + files[i].name;
-        const storageRef = ref(storage, "images/" + fileName);
+        const storageRef = ref(storage, 'images/' + fileName);
         await uploadBytesResumable(storageRef, files[i], {
           contentType: files[i].type,
         });
 
         // Get the public URL of the uploaded file
         const publicUrl = await getDownloadURL(storageRef);
-        console.log("File available at", publicUrl);
+        console.log('File available at', publicUrl);
         imagePaths.push(publicUrl);
       }
-      
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("place", place);
-      formData.append("description", description);
-      formData.append(
-        "writer",
-        userinfo.username
-      
-      );
-      formData.append(
-        "writerId",
-        userinfo.user_id
-    
-      );
 
-      formData.append("images", imagePaths);
-   
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('place', place);
+      formData.append('description', description);
+      formData.append('writer', userinfo.username);
+      formData.append('writerId', userinfo.user_id);
+
+      // Append each image URL individually
+      for (const imageUrl of imagePaths) {
+        formData.append('images', imageUrl);
+      }
+
       // Send other form data and image URLs to your server
       const response = await axios.post(
-        "http://localhost:8000/post/add_new_travel/",
+        'http://localhost:8000/post/add_new_travel/',
         formData,
 
         {
           withCredentials: true,
-        }
+        },
       );
 
       console.log(response.data);
 
-      toast.success("Post added successfully", {
+      toast.success('Post added successfully', {
         autoClose: 1000,
-        position: "top-right",
+        position: 'top-right',
       });
 
-      navigate("/");
+      navigate('/');
     } catch (error) {
       setLoading(false);
-      console.error("Error:", error);
+      console.error('Error:', error);
 
       if (error.response && error.response.status === 400) {
         setError(error.response.data.error);
       } else {
-        setError("An error occurred. Please try again.");
+        setError('An error occurred. Please try again.');
       }
     }
   };
@@ -182,7 +175,7 @@ export default function CreatePost() {
           className="rounded-lg p-2 bg-teal-700 w-100 dark:bg-gray-500 dark:hover:bg-gray-400 text-white my-3"
           disabled={loading}
         >
-          {loading ? "Saving..." : "Save"}
+          {loading ? 'Saving...' : 'Save'}
         </button>
         {error && (
           <p className="text-red-600 text-center font-semibold">{error}</p>

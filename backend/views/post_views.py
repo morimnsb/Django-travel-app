@@ -14,6 +14,9 @@ from django.core.exceptions import ObjectDoesNotExist
 import json
 from django.views.decorators.http import require_http_methods
 logger = logging.getLogger(__name__)
+# backend/views.py
+
+
 
 @csrf_exempt
 @require_POST
@@ -45,20 +48,25 @@ def add_new_travel(request):
         new_travel.save()
 
         # Add image URLs to the new travel
+        image_urls = []
         for image_url in images:
             # Create a new Image instance associated with the post
             image_instance = Image.objects.create(post=new_travel, image=image_url)
             print(f"Image saved: {image_instance}")
+            image_urls.append(image_instance.image)  # Append the image URL to the list
 
         user.posts.add(new_travel)
 
-        return JsonResponse({"message": "New Travel Added", "travel_id": new_travel.id}, status=201)
+        # Include image URLs in the response
+        response_data = {
+            "message": "New Travel Added",
+            "travel_id": new_travel.id,
+            "image_urls": image_urls,
+        }
+        return JsonResponse(response_data, status=201)
     except Exception as e:
         print(e)
         return JsonResponse({"error": "Internal Server Error"}, status=500)
-
-
-
 
 
 
@@ -148,53 +156,58 @@ import json
 from django.http import JsonResponse
 import json
 from django.http import JsonResponse
+from rest_framework import serializers
 
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = '__all__'
 @csrf_exempt
-@require_http_methods(["PUT"])
+@require_http_methods(["POST", "PUT", "PATCH"])
+
 def update_travel(request, travel_id):
     try:
-        # Get the JSON data from the request body
-        data = json.loads(request.body.decode('utf-8'))
-        
-        print("Request Data:", data)
+        print("Request received for travel update:", request.body)
+        post = Post.objects.get(id=travel_id)
 
-        travel = get_object_or_404(Post, pk=int(travel_id))
+        # Retrieve updated data from the request
+        if request.method == 'PATCH':
+            data = json.loads(request.body.decode('utf-8'))
+            title = data.get('title', '').strip()
+            place = data.get('place', '').strip()
+            description = data.get('description', '').strip()
+            new_images = data.get('images', [])  # Make sure to get new_images from data
+    # Add more fields as needed
+        else:
+            title = request.POST.get('title', '').strip()
+            place = request.POST.get('place', '').strip()
+            description = request.POST.get('description', '').strip()
+            new_images = request.POST.getlist('new_images')
+        print(f"Received title: {title}")
+        print(f"Received place: {place}")
+        print(f"Received description: {description}")
+        print(f"Received new_images: {new_images}")
+        # Update the post fields
+        post.title = title
+        post.place = place
+        post.description = description
+        # Update more fields as needed
 
-        # Update the travel post data
-        travel.title = data.get('title', travel.title)
-        travel.description = data.get('description', travel.description)
-        travel.place = data.get('place', travel.place)
+        # Save the changes
+        post.save()
 
-        # Save the updated travel post to the database
-        travel.save()
+        # Handle new images
+      
+        for image_url in new_images:
+            # Create a new Image instance associated with the post
+            image_instance = Image.objects.create(post=post, image=image_url)
+            print(f"New Image saved: {image_instance}")
 
-        # Add new images (provided as URLs) to the existing images array
-        if 'images' in data:
-            
-            new_images = data['images']
-            print("Images to add:", new_images)
-            if len(new_images) >0:
-                print("Images to add:", new_images)
-            # Create and add Image objects to the ManyToMany relationship
-                for image_url in new_images:
-                    image = Image.objects.create(image=image_url)
-                    travel.images.add(image)
-
-        # Return the updated travel post details in the response
-        updated_post_data = {
-            "id": str(travel.id),
-            "title": travel.title,
-            "place": travel.place,
-            "description": travel.description,
-            "writer": travel.writer,
-            "writerId": travel.id,
-            "images": [image.image for image in travel.images.all()],  # Get image URLs
-            "created_at": travel.created_at,
-        }
-
-        return JsonResponse({"message": "Travel post updated successfully", "travel": updated_post_data})
+        return JsonResponse({"message": "Post Updated"}, status=200)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Post not found"}, status=404)
     except Exception as e:
-        logger.error("An error occurred during travel post update: %s", e)
+        print(e)
         return JsonResponse({"error": "Internal Server Error"}, status=500)
 
 
@@ -233,29 +246,40 @@ def delete_post_image(request, post_id, filename):
         logger.error("An error occurred during post image deletion: %s", e)
         return JsonResponse({"error": "Internal Server Error"}, status=500)
 
+# # views.py
+# from django.views.decorators.http import require_http_methods
 
 # @csrf_exempt
-# @require_http_methods(["PUT"])
+# @require_http_methods(["POST", "PUT"])
 # def update_travel(request, travel_id):
 #     try:
-#         # Ensure travel_id is a valid integer
-#         if not str(travel_id).isdigit():
-#             return JsonResponse({"error": "Invalid travel post ID"}, status=400)
+#         post = Post.objects.get(id=travel_id)
 
-#         # Get the image URLs from the request data
-#         new_images = request.POST.getlist('images', [])
+#         # Retrieve updated data from the request
+#         title = request.POST.get('title', '').strip()
+#         place = request.POST.get('place', '').strip()
+#         description = request.POST.get('description', '').strip()
+#         # Add more fields as needed
 
-#         # Print the image URLs
-#         print("Received images:", new_images)
+#         # Update the post fields
+#         post.title = title
+#         post.place = place
+#         post.description = description
+#         # Update more fields as needed
 
-#         # Perform other update operations with the image URLs as needed
-#         travel = get_object_or_404(Post, pk=int(travel_id))
-#         travel.title = request.POST.get('title', travel.title)
-#         travel.description = request.POST.get('description', travel.description)
-#         travel.place = request.POST.get('place', travel.place)
-#         travel.images.extend(new_images)
-#         travel.save()
+#         # Save the changes
+#         post.save()
 
-#         return JsonResponse({"message": "Travel post updated successfully"})
+#         # Handle new images
+#         new_images = request.POST.getlist('new_images')
+#         for image_url in new_images:
+#             # Create a new Image instance associated with the post
+#             image_instance = Image.objects.create(post=post, image=image_url)
+#             print(f"New Image saved: {image_instance}")
+
+#         return JsonResponse({"message": "Post Updated"}, status=200)
+#     except Post.DoesNotExist:
+#         return JsonResponse({"error": "Post not found"}, status=404)
 #     except Exception as e:
-#         return JsonResponse({"error": str(e)}, status=500)
+#         print(e)
+#         return JsonResponse({"error": "Internal Server Error"}, status=500)

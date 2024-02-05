@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useParams } from "react-router";
-import BackButton from "../components/BackButton";
-import PostDetails from "../components/PostDetails";
-import { IoIosArrowRoundBack } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useParams } from 'react-router';
+import BackButton from '../components/BackButton';
+import PostDetails from '../components/PostDetails';
+import { IoIosArrowRoundBack } from 'react-icons/io';
+import { useNavigate } from 'react-router-dom';
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from 'firebase/storage'; // Added import for Firebase Storage functions
 import { app } from '../config/firebase.config';
-import { isImageValid } from "../utils/imageFormatUtils"; // Import the function
+import { isImageValid } from '../utils/imageFormatUtils'; // Import the function
 import firebaseConfig, { storage } from '../config/firebase.config';
-import { toast } from "react-toastify";
-
+import { toast } from 'react-toastify';
 
 const ShowPost = () => {
   const navigate = useNavigate();
@@ -21,15 +25,18 @@ const ShowPost = () => {
   const [formatError, setFormatError] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  
+  const [imageUploadLoading, setImageUploadLoading] = useState(false);
+
   useEffect(() => {
     const fetchPostDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/post/details/${id}`);
-       console.log(response.data.travel);
+        const response = await axios.get(
+          `http://localhost:8000/post/details/${id}`,
+        );
+        console.log(response.data.travel);
         setPost(response.data.travel);
       } catch (error) {
-        console.error("Error fetching post details:", error);
+        console.error('Error fetching post details:', error);
       }
     };
 
@@ -45,100 +52,90 @@ const ShowPost = () => {
     setPost((prevPost) => ({ ...prevPost, [name]: value }));
   };
 
-  const handleSave = async () => {
-    try {
-      const response = await axios.put(`http://localhost:8000/post/update/${id}/`, post);
-      setIsEditMode(false);
-      console.log(response);
-    } catch (error) {
-      console.error("Error updating post:", error);
-    }
-  };
+  // ...
 
   const handleImageUpload = async (files) => {
-    console.log("Files to upload:", files);
-
     try {
-      // const storage = getStorage(app);
-      const imagePaths = [];
+      setImageUploadLoading(true);
+
+      // Check if any files are selected
+      if (files.length === 0) {
+        return [];
+      }
 
       // Check if the image format is valid
       if (!isImageValid(files)) {
-        setError(
-          "Some of the selected files are not in a supported format. Please only upload files in JPEG or PNG format."
+        setFormatError(
+          'Some of the selected files are not in a supported format. Please only upload files in JPEG or PNG format.',
         );
 
-        // clear the error message after 3 seconds
         setTimeout(() => {
-          setError(null);
+          setFormatError(null);
         }, 4000);
 
-        return;
+        return [];
       }
 
       setLoading(true);
 
+      const imagePaths = [];
+
       // Upload files to Firebase Storage
       for (let i = 0; i < files.length; i++) {
         const fileName = new Date().getTime() + files[i].name;
-        const storageRef = ref(storage, "images/" + fileName);
+        const storageRef = ref(storage, 'images/' + fileName);
         await uploadBytesResumable(storageRef, files[i], {
           contentType: files[i].type,
         });
 
-        // Get the public URL of the uploaded file
         const publicUrl = await getDownloadURL(storageRef);
-        console.log("File available at", publicUrl);
-        imagePaths.push(publicUrl);
+        console.log('File available at', publicUrl);
+        imagePaths.push(publicUrl); // Push each URL to imagePaths
       }
-      
-      const formData = new FormData();
-      // formData.append("title", title);
-      // formData.append("place", place);
-      // formData.append("description", description);
-      // formData.append(
-      //   "writer",
-      //   userinfo.username
-      
-      // );
-      // formData.append(
-      //   "writerId",
-      //   userinfo.user_id
-    
-      // );
-
-      formData.append("images", imagePaths);
-   
-      // Send other form data and image URLs to your server
-      const response = await axios.put(
-        `http://localhost:8000/post/update/${id}/`,
-        formData,
-
-        {
-          withCredentials: true,
-        }
-      );
-
-      console.log(response.data);
-
-      toast.success("Post added successfully", {
-        autoClose: 1000,
-        position: "top-right",
-      });
-
-      navigate("/");
+      setImageUploadLoading(false);
+      setLoading(false);
+      return imagePaths;
     } catch (error) {
       setLoading(false);
-      console.error("Error:", error);
+      setImageUploadLoading(false);
+      console.error('Error:', error);
 
       if (error.response && error.response.status === 400) {
         setError(error.response.data.error);
       } else {
-        setError("An error occurred. Please try again.");
+        setError('An error occurred. Please try again.');
       }
+
+      return [];
     }
   };
 
+  // ...
+  
+  const handleSave = async () => {
+    try {
+      let updatedPost = { ...post }; // Create a copy of the post object
+
+      if (newImages) {
+        const imagePaths = await handleImageUpload(newImages);
+        updatedPost.images = [...updatedPost.images, ...imagePaths];
+      }
+  
+      console.log(updatedPost); // Verify that updatedPost contains the new images
+  
+      const postUpdateResponse = await axios.patch(
+        `http://localhost:8000/post/update/${id}/`,
+        updatedPost, // Use updatedPost instead of post
+      );
+      console.log(postUpdateResponse);
+
+      setIsEditMode(false);
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
+  };
+
+  // ...
 
   const handleImageDelete = async (index) => {
     try {
@@ -149,25 +146,24 @@ const ShowPost = () => {
         images: prevPost.images.filter((_, i) => i !== index),
       }));
     } catch (error) {
-      console.error("Error deleting image:", error);
+      console.error('Error deleting image:', error);
     }
   };
 
   return (
     <div className="mx-auto p-10 mt-16 overflow-hidden dark:bg-gray-950 min-h-screen">
       <BackButton />
-      {JSON.parse(localStorage.getItem("Userinfo")).username === post.writer ? (
+      {JSON.parse(localStorage.getItem('Userinfo')).username === post.writer ? (
         <>
           <PostDetails
             post={post}
             isEditMode={isEditMode}
             handleSave={handleSave}
             handleInputChange={handleInputChange}
-            handleImageUpload={handleImageUpload}
+            handleImageUpload={handleSave}
             handleImageDelete={handleImageDelete}
             handleEditMode={handleEditMode}
           />
-          {/* Add new image */}
           <div className="mb-4 ml-7 dark:text-slate-200 dark:bg-gray-950">
             <label
               htmlFor="newImages"
@@ -184,7 +180,7 @@ const ShowPost = () => {
               className="border-2 p-3 mt-2"
             />
             <button
-              onClick={() => handleImageUpload(newImages)}
+              onClick={() => handleSave(newImages)}
               className="bg-gray-800 text-white p-4 px-6 mt-2 dark:bg-slate-300 dark:text-gray-900"
             >
               Upload
@@ -211,7 +207,6 @@ const ShowPost = () => {
           <p className="text-slate-900 mt-4 leading-snug dark:text-slate-200">
             {post.description}
           </p>
-
           <button
             onClick={() => navigate(-1)}
             className="text-lg flex items-center gap-1 text-teal-600"

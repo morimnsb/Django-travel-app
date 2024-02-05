@@ -19,7 +19,9 @@ export default function Navbar() {
   // };
 
   // useEffect(() => {
-    const username = JSON.parse(localStorage.getItem("Userinfo")).username
+    const userInfoString = localStorage.getItem("Userinfo");
+    const username = userInfoString ? JSON.parse(userInfoString).username || "unknown" : "unknown";
+
     // console.log("userinfo",userinfo);
   
   useEffect(() => {
