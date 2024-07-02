@@ -53,7 +53,7 @@ const PostList = () => {
       })
       .then((response) => {
         
-        console.log(response);
+        // console.log(response);
         const newPosts = response.data.travels;
         // console.log(newPosts);
         // Combine existing posts and new posts
@@ -69,7 +69,7 @@ const PostList = () => {
             .includes(search.toLowerCase());
           return titleMatch || placeMatch;
         });
-        console.log("filteredPosts",filteredPosts);     
+        // console.log("filteredPosts",filteredPosts);     
         setPosts(allPosts);
         setHasMore(newPosts.length > 5);
         setLoading(false);

@@ -1,7 +1,8 @@
 # backend/urls/user_urls.py
 
 from django.urls import path
-from backend.views.user_views import signup, verify_user, search_user, update_user, sign_in
+from backend.views.user_views import signup, verify_user, update_user, sign_in, search_user
+
 
 urlpatterns = [
     path('signup/', signup, name='signup'),

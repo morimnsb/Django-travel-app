@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// import { fetchUserInfo } from '../utils/authUtil.js';
 import ThemeBtn from './ThemeBtn.jsx';
 import { MdLogout } from 'react-icons/md';
 import { useAvatar } from './AvatarContext';
@@ -9,38 +8,46 @@ import { FaUserCircle } from 'react-icons/fa';
 export default function Navbar() {
   const { avatar, updateAvatar } = useAvatar();
   const [isNavOpen, setIsNavOpen] = useState(false);
-  // const [username, setUsername] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // const loadUserInfo = async () => {
-  //   const userInfo = await fetchUserInfo();
-  //   setUsername(userInfo.username);
-    // setIsLoading(true);
-  // };
+  // const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState(null);
 
   // useEffect(() => {
-    const userInfoString = localStorage.getItem("Userinfo");
-    const username = userInfoString ? JSON.parse(userInfoString).username || "unknown" : "unknown";
-
-    // console.log("userinfo",userinfo);
+  //   console.log('Cookies in Navbar:', document.cookie);
+    
+  //   const userInfoString = localStorage.getItem("Userinfo");
+  //   setUsername(userInfoString ? JSON.parse(userInfoString).username || "unknown" : "unknown");
   
-  useEffect(() => {
-    const storedAvatar = localStorage.getItem('avatar');
-    if (storedAvatar) {
-      // Update the avatar in the context
-      updateAvatar(storedAvatar);
-    }
-  }, []);
+  //   const storedAvatar = localStorage.getItem('avatar');
+  //   if (storedAvatar) {
+  //     // Update the avatar in the context
+  //     updateAvatar(storedAvatar);
+  //   }
+  
+    // const checkIsLoggedIn = () => {
+    //   const isLoggedInCookie = document.cookie
+    //     .split(';')
+    //     .some((item) => item.trim().startsWith('isLoggedIn='));
+    //   setIsLoggedIn(isLoggedInCookie);
+    // };
+  
+    // Check the isLoggedIn cookie after signing in
+  //   checkIsLoggedIn();
+  // }, [updateAvatar]);
+  
 
   const toggleNav = () => {
     setIsNavOpen(!isNavOpen);
   };
 
   const handleLinkClick = () => {
-    toggleNav(false); // close  navigation menu when a link is clicked
+    toggleNav(false); // close navigation menu when a link is clicked
   };
-  const isLoggedIn = localStorage.getItem('token');
 
+  // Log the current value of isLoggedIn before the return statement
+  // console.log("isLoggedIn before return:", isLoggedIn);
+  const isLoggedIn = true
+  
   return (
     <nav className="bg-white py-2 border-gray-200 dark:bg-gray-900 fixed w-full top-0 left-0 z-10 px-3">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">

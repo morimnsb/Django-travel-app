@@ -36,7 +36,7 @@ const CommentList = ({ post }) => {
     try {
       const response = await axios.put(`/comments/update/${commentId}`, {
         replyText: reply.replyText,
-        writer: JSON.parse(localStorage.getItem("Userinfo")).username,
+        // writer: JSON.parse(localStorage.getItem("Userinfo")).username,
       });
       console.log(response);
       // Update the comment in the state with the new reply
@@ -72,7 +72,7 @@ const CommentList = ({ post }) => {
       });
   };
 
-  const user = JSON.parse(localStorage.getItem("Userinfo"));
+  // const user = JSON.parse(localStorage.getItem("Userinfo"));
 
   return (
     <div>
